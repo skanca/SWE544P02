@@ -5,6 +5,7 @@ import time
 import sys
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
+from Shared.User import User
 
 #ReadThread class
 class ReadThread (threading.Thread):
@@ -18,55 +19,55 @@ class ReadThread (threading.Thread):
         self.app = app
 
     def incoming_parser(self,data):
-        if data[0:4] == "TOCO":
+        if data[0:5] == "ICHCN":
+            print "Check Connection"
+        if data[0:5] == "SNUPA":
             print "Connection Request"
-        if data[0:4] == "UREJ":
-            print "User Login is Rejected"
-        if data[0:4] == "SESE":
-            print "Session is Ended"
-        if data[0:4] == "LTSA":
-            print "List Game Session Answer"
-        if data[0:4] == "JSAP":
-            print "Join a Game Session is Approved"
-        if data[0:4] == "JSDC":
-            print "Join a Game Session is Declined"
-        if data[0:4] == "CSAP":
-            print "Create a new Game Session is Approved"
-        if data[0:4] == "CSDC":
-            print "Create a new Game Session is Declined"
-        if data[0:4] == "GWST":
-            print "Game Will Start"
-        #if data[0:4] = "ATI":
-        #User is getting the ticket
-        if data[0:4] == "SYNM":
-            #5:3 = Number
-            print "Random Tombala Number is "
-        if data[0:4] == "ICNK":
-            #5:8 = UserName
-            #13:3= Cinko Number
-            print "A User Cinko information - Announced"
-        if data[0:4] == "ITMB":
-            #5:8 = UserName
-            print "A User Tombala information - Announced"
-        if data[0:4] == "CNKA":
-            print "Cinko Request is Approved"
-        if data[0:4] == "CNKD":
-            print "Cinko Request is Declined"
-        if data[0:4] == "TMBA":
-            print "Tombala Request is Approved"
-        if data[0:4] == "TMBD":
-            print "Tombala Request is Declined"
-        if data[0:4] == "INFW":
-            print "Too many invlaid request, User session is ended"
-        if data[0:4] == "LUCA":
-            #5:8 = User Name
-            #13:X= Card Information
-            print "Learn Other User Card Information Answer"
-        if data[0:4] == "GFNS":
-            #5:8 = Winner Name
-            print "Game ower Winner is ..."
-        if data[0:4] == "ERRR":
-            print "Command Error"
+        if data[0:5] == "SNUPA":
+            print "SignUp Request is Approved"
+        if data[0:5] == "SNUPR":
+            print "SignUp Request is Rejected"
+        if data[0:5] == "LGINA":
+            print "Login Request is Approved"
+        if data[0:5] == "LGINR":
+            print "Login Request is Rejected"
+        if data[0:5] == "LGOTA":
+            print "Log out Request is Approved"
+        if data[0:5] == "LGOTR":
+            print "Log out Request is Rejected"
+        if data[0:5] == "LSTMI":
+            print "List Tombala Request Result"
+            #6-5: Session Number
+            #11-: User List (10 chracter for each user)
+        if data[0:5] == "JNTMA":
+            print "Join to Active Tombala Session (not started yet) Approved"
+        if data[0:5] == "JNTMR":
+            print "Join to Active Tombala Session (not started yet) Rejected"
+        if data[0:5] == "CRTMA":
+            print "Create a Tombala Session is Approved"
+        if data[0:5] == "CRTMR":
+            print "Create a Tombala Session is Rejected"
+        if data[0:5] == "ANCNA":
+            print "Announce Cinko Request is Approved"
+        if data[0:5] == "ANCNR":
+            print "Announce Cinko Request is Invalid"
+        if data[0:5] == "ANTMA":
+            print "Announce Tombala Request is Approved"
+        if data[0:5] == "ANTMA":
+            print "Announce Tombala Request is Approved"
+        if data[0:5] == "IANNM":
+            print "Announce Number"
+            #6-3: Number
+        if data[0:5] == "IBRCN":
+            print "Broad Cast Cinko"
+            #6-10: UserName
+            #16-3: Cinko Number
+        if data[0:5] == "IBRTM":
+            print "Broad Cast Tombala"
+            #6-10: UserName
+        if data[0:5] == "GMINF":
+            print "Game Info"
+            #6-: User List and User Info
 
 #ReadThread run
     def run(self):
@@ -126,12 +127,15 @@ class ClientDialog(QDialog):
 #Output Message 'll be shown/edited in sendMessage
         self.sendMessage = QLineEdit("",self)
 
+        self.userName = QLineEdit("",self)
+
         self.messageArea = QTextBrowser()
 
         self.send_button = QPushButton("&Send")
         #self.send_button.connect(self.send_button,SIGNAL('Clicked'),self.outgoing_parser)
         self.send_button.connect(self.send_button,SIGNAL('clicked()'),self.outgoing_parser)
         self.vbox.addLayout(self.hbox)
+        self.vbox.addWidget(self.userName)
         self.vbox.addWidget(self.sendMessage)
         self.vbox.addWidget(self.send_button)
 
@@ -155,35 +159,35 @@ class ClientDialog(QDialog):
         self.qt_app.exec_()
 
     def outgoing_parser(self):
+        out_message = ""
         #print "outgoing parser"
         data = self.sendMessage.text()
-        self.sendQueue.put(str(data))
         self.sendMessage.clear()
         print data
-        if data[0:4] == "USRS":
-            #5:8 = User Name
+        if data[0:5] == "ISNUP":
+            #6:10 = User Name
             print "User Sign Up Request"
-        if data[0:4] == "LOGI":
-            #5:8 = User Name
-            print "User Login"
-        if data[0:4] == "LOGO":
-            #5:8 = User Name
-            print "User Log out"
-        if data[0:4] == "LSTS":
+        if data[0:5] == "ILGIN":
+            #6:10 = User Name
+            print "User Login Request"
+        if data[0:5] == "ILGOT":
+            #6:10 = User Name
+            print "User Log out Request"
+        if data[0:5] == "ILSTM":
             print "List Tombala Session"
-        if data[0:4] == "JSTS":
-            #5:3 = Tombala Session ID
+        if data[0:5] == "IJNTM":
+            #6:3 = Tombala Session ID
             print "Join a Tombala Session"
-        if data[0:4] == "CRTS":
+        if data[0:5] == "ICRTM":
             print "Create a Tombala Session"
-        if data[0:4] == "SYCN":
-            #5:3 = Cinko Number
+        if data[0:5] == "IANCN":
+            #6:3 = Cinko Number
             print "Announced Cinko"
-        if data[0:4] == "SYTM":
+        if data[0:5] == "IANTM":
             print "Announced Tombala"
-        if data[0:4] == "LUCI":
+        if data[0:4] == "IRQGM":
             print "Request Tombala Session Card Status"
-
+        self.sendQueue.put(str(out_message))
 
 sendQueue = Queue.Queue()
 screenQueue = Queue.Queue()
@@ -194,6 +198,9 @@ print host
 port=12345
 userName = "senol"
 s.connect((host,port))
+
+user = User(userName,host,port)
+
 
 app = ClientDialog(sendQueue,screenQueue)
 
