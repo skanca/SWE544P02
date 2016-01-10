@@ -4,8 +4,8 @@ import threading
 import time
 #import User from Shared
 from Shared.User import User
-
-
+from PyQt4.QtCore import *
+from PyQt4.QtGui import *
 
 class ClientGetThread(threading.Thread):
     def __init__(self,ip,port,clientSocket):
@@ -83,10 +83,22 @@ class ClientSendThread(threading.Thread):
             #if qsize
 
             #
+def checkToStartGame():
+    if (RequestedBingoSessionUsers._qsize() >= 3) and (RequestedBingoSessionUsers.qsize() <= 6):
+        print "hello new game"
+        ActiveBingoSessionUsers.queue.clear()
+        for user in RequestedBingoSessionUsers.get():
+            user.generateCard()
+            ActiveBingoSessionUsers.put(user)
 
-#ActiveBingoSessionUsers = Queue()
-#RequestedBingoSessionUsers = Queue()
+ActiveBingoSessionUsers = Queue.Queue()
+RequestedBingoSessionUsers = Queue.Queue()
 ActiveBingoSessionNumber = [0 for x in range (90)]
+
+timer = QTimer()
+timer.timeout.connect(checkToStartGame)
+# #update every 10 ms
+timer.start(100)
 
 s = socket.socket()
 host = socket.gethostname()
@@ -98,6 +110,8 @@ while True:
     (clientSocket,(ip,port)) = s.accept()
     newGetThread = ClientGetThread(ip,port,clientSocket)
     newGetThread.start()
+
+
 
     newSendThread = ClientSendThread(ip,port,clientSocket)
     newSendThread.start()
