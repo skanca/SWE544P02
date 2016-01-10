@@ -21,33 +21,52 @@ class ClientGetThread(threading.Thread):
 
     def parseInput(self,data):
         response = ""
-        if data[0:4] == 'TICI':
-            response = "TOCO"
-            print 'Check Connection'
-        if data[0:4] == 'USRS':
-            response = "UAPR"
+#        if data[0:4] == 'SIGNUP':
+#            response = "TOCO"
+#            print 'Check Connection'
+        if data[0:5] == 'ISNUP':
+            response = "SNUPA"
+            #response = "SNUPR"
             print 'User Sign Up'
-        if data[0:4] == 'LOGI':
-            response = "UAPR"
+        if data[0:5] == 'ILGIN':
+            response = "LGINA"
+            #response = "LGINR"
             print 'User Login'
-        if data[0:4] == 'LOGO':
-            response = "SESE"
+        if data[0:5] == 'ILGOT':
+            response = "LGOTA"
             print 'User Log out'
-        if data[0:4] == 'LSTS':
-            response = "LTSA"
+        if data[0:5] == 'ILSTM':
+            response = "LSTMI"
             print 'List Tombala Sessions'
-        if data[0:4] == 'JNTS':
-            response = "JNAP"
+        if data[0:5] == 'IJNTM':
+            response = "JNTMA"
+            #response = "JNTMR"
             print 'Join a Tombala Session'
-        if data[0:4] == 'CRTS':
-            response = "CSAP"
+        if data[0:5] == 'ICRTM':
+            response = "CRTMA"
+            #response = "CRTMR"
             print 'Create a Tombala Session'
-        if data[0:4] == 'SYCN':
-            response = "CNKA"
-            print 'Say Cinko'
-        if data[0:4] == 'SYTM':
-            response = "TMBA"
+        if data[0:5] == 'IANCN':
+            response = "ANCNA"
+            #response = "ANCNR"
+            #+check Cinko
+            #+2.response is IBRCN username cinkonumber
+            print 'Announce Cinko'
+        if data[0:5] == 'IANTM':
+            response = "ANTMA"
+            #response = "ANTMR"
+            #+check Tombala
+            #+2.response is IBRTM username
+            #+3.response is IGMFN username
             print 'Say Tombala'
+        if data[0:5] == 'ANNMA':
+            print "generate new number"
+            #response = "ANTMA"
+        if data[0:5] == "IRQGM":
+            print "Game Info request"
+            response = "GMINF"
+            #+User and User Info List
+
         print response
         self.csocket.sendall(response)
 
@@ -117,19 +136,25 @@ while True:
     newSendThread.start()
 
 
-#def cardGenerator(self):
-
 def numberGenerator(self):
     print "number Generator"
-#
 
-def setNumberInCards(self):
-    print "set number in cards"
-#
+#will be in User object
+#def cardGenerator(self):
+#    print "card Generator"
 
-def checkCinko(self,userName, cinkoID):
-    print "check Cinko"
+#will be in User object
+#def setNumberInCards(self):
+#    print "set number in cards"
+
+#will be in User object
+#def checkCinko(self,userName, cinkoID):
+#    print "check Cinko"
 #   cinkoUserCard[][] = getUserCard()
+
+#will be in User object
+#def checkTombala(self,userName):
+#    print "check Tombala"
 
 def broadCastCinko(self,userName,cinkoID):
     print "broadcast Cinko"
@@ -137,8 +162,6 @@ def broadCastCinko(self,userName,cinkoID):
 def broadCastTombala(self,userName):
     print "broadcast Tombala"
 
-def checkTombala(self,userName):
-    print "check Tombala"
 
 
 
