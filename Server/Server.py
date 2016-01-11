@@ -12,7 +12,7 @@ class ClientGetThread(threading.Thread):
         threading.Thread.__init__(self)
         userName = ""
         self.user = User(userName,ip,port)
-       # self.ActiveBingoSessionUser.append(self.user)
+       ## self.ActiveBingoSessionUser.append(self.user)
        # self.RequestedBingoSessionUser.append(self.user)
         self.ip = ip
         self.port = port
