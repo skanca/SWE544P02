@@ -1,19 +1,16 @@
 import random
 class User:
-    def __init__(self,nickName, ip, port):
-        self.userName = nickName
+    def __init__(self,userName, ip, port):
+        self.userName = userName
         self.userIP = ip
         self.userPort = port
+
         self.userTicketColumnSize = 9
         self.userTicketRowSize = 3
         self.userTicketMinNumber = 1
         self.userTicketMaxNumber = 90
         self.userTicket = [[0 for x in range (9)] for x in range(3)]
         self.userTicketState = [[0 for x in range (9)] for x in range(3)]
-
-#    74	87	82	16	89	70	66	65	8
-#    26	62	11	86	25	23	17	4	24
-#    29	71	13	5	22	52	88	55	53
 
     def generateCard(self):
         randRange = range(self.userTicketMinNumber,self.userTicketMaxNumber)
@@ -40,8 +37,26 @@ class User:
                     self.userTicketState[index1][index2] = "*"
         return find
 
-user = User("senol","ip","port")
-user.generateCard()
+    def checkForResult(self):
+        rowSize = 3
+        columnSize = 9
+        self.tombalaMi = True
+        self.cinkoMu = True
+        for index1 in range (rowSize):
+            self.cinkoMu = True
+            for index2 in range (columnSize):
+                if self.userTicketState[index1][index2] <> "*" :
+                    self.cinkoMu = False
+                    self.tombalaMi = False
+
+#example: try it
+#user = User("senol","ip","port")
+#user.generateCard()
+
+#    74	87	82	16	89	70	66	65	8
+#    26	62	11	86	25	23	17	4	24
+#    29	71	13	5	22	52	88	55	53
+
 """"
         print "card Generator"
         for h in range(self.cards):
