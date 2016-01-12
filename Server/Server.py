@@ -4,42 +4,39 @@ import threading
 import time
 #import User from Shared
 from Shared.User import User
+import random
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 
 class ClientGetThread(threading.Thread):
     def __init__(self,ip,port,clientSocket):
         threading.Thread.__init__(self)
-        userName = ""
-        self.user = User(userName,ip,port)
-       ## self.ActiveBingoSessionUser.append(self.user)
-       # self.RequestedBingoSessionUser.append(self.user)
+        self.user = User("",ip,port)
         self.ip = ip
         self.port = port
-        self.csocket = clientSocket
+        self.clientSocket = clientSocket
         print ("[+] New Get Thread started for "+ip + ":"+str(port))
 
     def checkUser(self,userName):
         findUser = False
         for us in AllSignInUsers:
-            if us == userName:
+            if (us == self.user.userName):
                 findUser = True
                 break
         return findUser
+
     def parseInput(self,data):
-        if (not data[0:5] <> 'ISNUP') and (not self.checkUser()):
+        if (not data[0:5] <> 'ISNUP') and (self.checkUser()):
             response = "LGINR"
-            self.csocket.sendall(response)
+            self.clientSocket.sendall(response)
             return False
+
         response = ""
-#        if data[0:4] == 'SIGNUP':
-#            response = "TOCO"
-#            print 'Check Connection'
         if data[0:5] == 'ISNUP':
-            response = "SNUPA"
-            userName = data[6:]
+            userName = data[6:10]
+            self.user.setUserName(userName)
             AllSignInUsers.append(userName)
-            #response = "SNUPR"
+            response = "SNUPA" + userName
             print 'User Sign Up'
         if data[0:5] == 'ILGIN':
             response = "LGINA"
@@ -54,17 +51,17 @@ class ClientGetThread(threading.Thread):
             response = "LSTMI"
             print 'List Tombala Sessions'
         if data[0:5] == 'IJNTM':
-            if (RequestedBingoSessionUsers.qsize() > 6):
+            if (requestSessionUsers.count() > 6):
                 response = "JNTMR"
             else:
                 response = "JNTMA"
-                RequestedBingoSessionUsers.put(self.user)
+                requestSessionUsers.append(self.user)
             #response = "JNTMR"
             print 'Join a Tombala Session'
         if data[0:5] == 'ICRTM':
-            if (RequestedBingoSessionUsers.qsize() == 0):
+            if (requestSessionUsers.count() == 0):
                 response = "CRTMA"
-                RequestedBingoSessionUsers.put(self.user)
+                requestSessionUsers.append(self.user)
             else:
                 response = "CRTMR"
             #response = "CRTMR"
@@ -75,13 +72,9 @@ class ClientGetThread(threading.Thread):
             if cinkoNumber < 1 or cinkoNumber > 3:
                 response = "ERRRR"
             else:
-                cinkoMu = True
-                for index2 in range (0,9):
-                    if (self.user.userTicketState[cinkoNumber][index2] <> "*"):
-                        cinkoMu = False
-                        break
-                if cinkoMu:
+                if self.user.ticket.checkCinko(cinkoNumber):
                     #response = "ANCNA"
+                    response = ""
                     broadCastCinko(self.user.userName,cinkoNumber)
                 else:
                     response = "ANCNR"
@@ -91,13 +84,9 @@ class ClientGetThread(threading.Thread):
             print 'Announce Cinko'
         if data[0:5] == 'IANTM':
             tombalaMi = True
-            for index1 in range (0,3):
-                for index2 in range (0,9):
-                    if (self.user.userTicketState[index1][index2] <> "*"):
-                        tombalaMi = False
-                        break
-            if tombalaMi:
+            if (self.user.ticket.checkTombala()):
                 #response = "ANTMA"
+                response = ""
                 broadCastTombala(self.user.userName)
             else:
                 response = "ANTMR"
@@ -107,17 +96,17 @@ class ClientGetThread(threading.Thread):
             #+3.response is IGMFN username
             print 'Say Tombala'
         if data[0:5] == 'ANNMA':
-            number = generateNumber()
-            broadCastNumber(number)
-            print "generate new number"
-            #response = "ANTMA"
-        if data[0:5] == "IRQGM":
-            print "Game Info request"
-            response = "GMINF"
-            #+User and User Info List
-
+            self.user.setLastNumberApproved(True)
+            response = ""
+            #in a timer event every 5 miniute, if all user lastNumberApproved is True, then generate a new number
+#            number = generateNumber()
+#            broadCastNumber(number)
+#            print "generate new number"
+            print "Announced Number Approved"
         print response
-        self.csocket.sendall(response)
+        if (response <> ""):
+            self.clientSocket.sendall(response)
+            #+User and User Info List
 
     def run(self):
         while True:
@@ -127,29 +116,44 @@ class ClientGetThread(threading.Thread):
                 break
             self.parseInput(data)
 
+""""
+        if data[0:5] == "IRQGM":
+            print "Game Info request"
+            response = "GMINF"
+"""""
+
 
 
 class ClientSendThread(threading.Thread):
-    def __init__(self,ip,port,clientSocket):
+    def __init__(self,ip,port,clientSocket,sendQueue):
         threading.Thread.__init__(self)
         self.ip = ip
         self.port = port
-        self.csocket = clientSocket
+        self.clientSocket = clientSocket
+        self.sendQueue = sendQueue
         print ("[+] New Send Thread started for " + ip + ":" + str(port))
 
     def sendtoAll(self,data):
         for thread in sendThreads.get():
-            print "..."
+            thread.clientSocket.sendall(data)
+            print data
             #thread
-    def run(self):
-        print "Welcome to the server. Type something and hit enter"
-        while True:
-            a= 15
-            #print "111"
-            #if qsize
 
-            #
-def checkToStartGame():
+    def send(self,data):
+        self.clientSocket.sendall(data)
+
+    def run(self):
+        while True:
+            #print "Welcome to the server. Type something and hit enter"
+            if self.sendQueue.qsize() > 0:
+                queue_message = self.sendQueue.get()
+                try:
+                    self.clientSocket.send(queue_message)
+                except socket.error:
+                    self.clientSocket.close()
+
+
+""""
     if (RequestedBingoSessionUsers._qsize() >= 3) and (RequestedBingoSessionUsers.qsize() <= 6):
         print "hello new game"
         ActiveBingoSessionUsers.queue.clear()
@@ -157,37 +161,51 @@ def checkToStartGame():
             user.generateCard()
             ActiveBingoSessionUsers.put(user)
 
-AllSignInUsers = []
-ActiveBingoSessionUsers = Queue.Queue()
-RequestedBingoSessionUsers = Queue.Queue()
-ActiveBingoSessionNumber = [0 for x in range (90)]
-
-timer = QTimer()
-timer.timeout.connect(checkToStartGame)
-# #update every 10 ms
-timer.start(100)
-
-s = socket.socket()
-host = socket.gethostname()
-port = 12345
-s.bind((host,port))
-s.listen(5)
-getThreads = Queue.Queue()
-sendThreads = Queue.Queue()
-
-while True:
-    (clientSocket,(ip,port)) = s.accept()
-    newGetThread = ClientGetThread(ip,port,clientSocket)
-    getThreads.put(newGetThread)
-    newGetThread.start()
-
-    newSendThread = ClientSendThread(ip,port,clientSocket)
-    sendThreads.put(newSendThread)
-    newSendThread.start()
+"""""
 
 
-def generateNumber(self):
+def checkStartGame():
+    for activeSendThread in sendThreads:
+        activeSendThread.user.ticket.generateTicket()
+        userTicket = activeSendThread.user.ticket.getTicketValueStream()
+        message = "IGMST" + str(activeSendThread.user.ticket.getTicketValueStream())
+        activeSendThread.send(message)
+        print message
+
+    print "checkToStartGame"
+
+def checkSendNumber(self):
     print "number Generator"
+    generateNumber = True
+    for activeSendThread in sendThreads:
+        if (not activeSendThread.user.lastNumberApproved):
+            generateNumber= False
+            break
+    if (generateNumber):
+        number = random.sample(range(1,90),89)
+        for activeSendThread in sendThreads:
+            message = "IANNM" + str(number).zfill(2)
+            activeSendThread.send(message)
+
+    print "generateNumber"
+
+def broadCastCinko(self,userName,cinkoID):
+    for uthread in sendThreads:
+        message = "IBRCN" + userName + cinkoID
+        uthread.csocket.sendAll(message)
+    print "broadcast Cinko"
+
+def broadCastTombala(self,userName):
+    for uthread in sendThreads:
+        message = "IBRTM" + userName
+        uthread.csocket.sendAll(message)
+    print "broadcast Tombala"
+
+def broadCastNumber(self,number):
+    for uthread in sendThreads:
+        message = "IANNM" + str(number).zfill(2)
+        uthread.csocket.sendAll(message)
+    print "broadcast Number"
 
 #will be in User object
 #def cardGenerator(self):
@@ -206,26 +224,40 @@ def generateNumber(self):
 #def checkTombala(self,userName):
 #    print "check Tombala"
 
-def broadCastCinko(self,userName,cinkoID):
-    for uthread in sendThreads:
-        message = "IBRCN" + userName + cinkoID
-        uthread.csocket.sendAll(message)
-    print "broadcast Cinko"
+#ActiveBingoSessionUsers = Queue.Queue()
+#RequestedBingoSessionUsers = Queue.Queue()
 
-def broadCastTombala(self,userName):
-    for uthread in sendThreads:
-        message = "IBRTM" + userName
-        uthread.csocket.sendAll(message)
-    print "broadcast Tombala"
+AllSignInUsers = []
+getThreads = []
+sendThreads = []
+activeSessionUsers = []
+requestSessionUsers = []
 
-def broadCastNumber(self,number):
-    for uthread in sendThreads:
-        message = "IANNM" + number
-        uthread.csocket.sendAll(message)
-    print "broadcast Number"
+#ActiveBingoSessionNumber = [0 for x in range (90)]
 
-def sendUserCards(self,user):
-    print "send User Initial Cards"
+timer = threading.Timer(30.0,checkStartGame)
+timer.start()
+
+#timer = threading.Timer(30.0,generateNumber)
+#timer.start()
+
+s = socket.socket()
+host = socket.gethostname()
+port = 12345
+s.bind((host,port))
+s.listen(5)
+
+while True:
+    (clientSocket,(ip,port)) = s.accept()
+    newGetThread = ClientGetThread(ip,port,clientSocket)
+    getThreads.append(newGetThread)
+    newGetThread.start()
+
+    sendQueue = Queue.Queue()
+    newSendThread = ClientSendThread(ip,port,clientSocket,sendQueue)
+    sendThreads.append(newSendThread)
+    newSendThread.start()
+
 
 
 

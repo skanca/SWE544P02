@@ -1,10 +1,20 @@
-import random
+import string
+from Shared import Ticket
 class User:
     def __init__(self,userName, ip, port):
-        self.userName = userName
+        self.userName = string.ljust(userName,10,' ')
         self.userIP = ip
         self.userPort = port
+        self.ticket = Ticket.Ticket(3,9,1,90)
+        self.lastNumberApproved = True
 
+    def setUserName(self,userName):
+        self.userName = userName
+
+    def setLastNumberApproved(self,value):
+        self.lastNumberApproved = value
+
+""""
         self.userTicketColumnSize = 9
         self.userTicketRowSize = 3
         self.userTicketMinNumber = 1
@@ -57,7 +67,8 @@ class User:
 #    26	62	11	86	25	23	17	4	24
 #    29	71	13	5	22	52	88	55	53
 
-""""
+
+
         print "card Generator"
         for h in range(self.cards):
             card = []

@@ -6,6 +6,7 @@ import sys
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 from Shared.User import User
+import string
 
 #ReadThread class
 class ReadThread (threading.Thread):
@@ -54,17 +55,20 @@ class ReadThread (threading.Thread):
             print "Announce Tombala Request is Approved"
         if data[0:5] == "ANTMA":
             print "Announce Tombala Request is Approved"
+        if data[0:5] == "IGMST":
+            print "Game Start Over"
+            #user.ticket = data[6:]
         if data[0:5] == "IANNM":
             print "Announce Number"
-            number = data[6:3]
+            number = data[6:2]
             user.checkSetNumber(number)
             cinkoMu = user.checkForCinko()
             tombalaMi = user.checkForResult()
             if user.tombalaMi:
-                response = "IANTM" + user.userName
+                response = "IANTM" + string.ljust(user.userName,10,' ')
                 self.csoc.sendall(response)
             elif user.cinkoMu:
-                response = "IANCN" + user.userName
+                response = "IANCN" + string.ljust(user.userName,10,' ')
                 self.csoc.sendall(response)
             else:
                 response = "ANNMA"
@@ -92,8 +96,8 @@ class ReadThread (threading.Thread):
                     self.incoming_parser(data)
             except:
                 pass
-            if data[0:3] == "BYE":
-                self.csoc.close()
+#            if data[0:3] == "BYE":
+#            self.csoc.close()
 
 
 class WriteThread (threading.Thread):
