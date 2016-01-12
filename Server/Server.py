@@ -1,4 +1,3 @@
-import Queue
 import socket
 import threading
 import string
@@ -113,38 +112,6 @@ class ClientThread(threading.Thread):
                 break
             self.parseInput(data)
 
-""""
-class ClientSendThread(threading.Thread):
-    def __init__(self,ip,port,clientSocket,sendQueue):
-        threading.Thread.__init__(self)
-        self.ip = ip
-        self.port = port
-        self.clientSocket = clientSocket
-        self.user =  User("",ip,port)
-        self.sendQueue = sendQueue
-        print ("[+] New Send Thread started for " + ip + ":" + str(port))
-
-    def sendtoAll(self,data):
-        for thread in clientThreads.get():
-            thread.clientSocket.sendall(data)
-            print data
-            #thread
-
-    def send(self,data):
-        self.clientSocket.sendall(data)
-
-    def run(self):
-        while True:
-            #print "Welcome to the server. Type something and hit enter"
-            if self.sendQueue.qsize() > 0:
-                queue_message = self.sendQueue.get()
-                try:
-                    self.clientSocket.send(queue_message)
-                except socket.error:
-                    self.clientSocket.close()
-
-
-"""""
 def checkStartGame():
     for activeSendThread in clientThreads:
         activeSendThread.user.ticket.generateTicket()
@@ -191,17 +158,10 @@ def broadCastNumber(self,number):
 
 AllSignInUsers = []
 clientThreads = []
-#sendThreads = []
 activeSessionUsers = []
 requestSessionUsers = []
-
-#ActiveBingoSessionNumber = [0 for x in range (90)]
-
 timer = threading.Timer(30.0,checkStartGame)
 timer.start()
-
-#timer = threading.Timer(30.0,generateNumber)
-#timer.start()
 
 s = socket.socket()
 host = socket.gethostname()
@@ -214,17 +174,4 @@ while True:
     newClientThread = ClientThread(ip,port,clientSocket)
     clientThreads.append(newClientThread)
     newClientThread.start()
-
-#    sendQueue = Queue.Queue()
-#    newSendThread = ClientSendThread(ip,port,clientSocket,sendQueue)
-#    sendThreads.append(newSendThread)
-#    newSendThread.start()
-
-
-
-
-
-
-
-
 
