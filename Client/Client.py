@@ -57,10 +57,13 @@ class ReadThread (threading.Thread):
             print "Announce Tombala Request is Approved"
         if data[0:5] == "IGMST":
             print "Game Start Over"
+            ticketValue = data[5:80]
+            user.ticket.setTicket(ticketValue)
+
             #user.ticket = data[6:]
         if data[0:5] == "IANNM":
             print "Announce Number"
-            number = data[6:2]
+            number = data[5:2]
             user.checkSetNumber(number)
             cinkoMu = user.checkForCinko()
             tombalaMi = user.checkForResult()
@@ -221,7 +224,7 @@ class ClientDialog(QDialog):
         if data[0:5] == "IANTM":
             out_message = "IANTM"
             print "Announced Tombala"
-        if data[0:4] == "IRQGM":
+        if data[0:5] == "IRQGM":
             out_message = "IRQGM"
             print "Request Tombala Session Card Status"
         if out_message <> "":

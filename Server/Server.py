@@ -1,14 +1,11 @@
 import Queue
 import socket
 import threading
-import time
-#import User from Shared
+import string
 from Shared.User import User
 import random
-from PyQt4.QtCore import *
-from PyQt4.QtGui import *
 
-class ClientGetThread(threading.Thread):
+class ClientThread(threading.Thread):
     def __init__(self,ip,port,clientSocket):
         threading.Thread.__init__(self)
         self.user = User("",ip,port)
@@ -26,14 +23,14 @@ class ClientGetThread(threading.Thread):
         return findUser
 
     def parseInput(self,data):
-        if (not data[0:5] <> 'ISNUP') and (self.checkUser()):
+        if (not data[0:5] <> 'ISNUP') and (self.checkUser(data[5:10])):
             response = "LGINR"
             self.clientSocket.sendall(response)
             return False
 
         response = ""
         if data[0:5] == 'ISNUP':
-            userName = data[6:10]
+            userName = data[5:10]
             self.user.setUserName(userName)
             AllSignInUsers.append(userName)
             response = "SNUPA" + userName
@@ -44,7 +41,7 @@ class ClientGetThread(threading.Thread):
             print 'User Login'
         if data[0:5] == 'ILGOT':
             response = "LGOTA"
-            userName = data[6:]
+            userName = data[5:10]
             AllSignInUsers.remove(userName)
             print 'User Log out'
         if data[0:5] == 'ILSTM':
@@ -68,7 +65,7 @@ class ClientGetThread(threading.Thread):
             print 'Create a Tombala Session'
         if data[0:5] == 'IANCN':
             response = "ANCNA"
-            cinkoNumber = data[6:3]
+            cinkoNumber = data[5:3]
             if cinkoNumber < 1 or cinkoNumber > 3:
                 response = "ERRRR"
             else:
@@ -110,31 +107,25 @@ class ClientGetThread(threading.Thread):
 
     def run(self):
         while True:
-            data = self.csocket.recv(1024)
+            data = self.clientSocket.recv(1024)
             print data
             if not data:
                 break
             self.parseInput(data)
 
 """"
-        if data[0:5] == "IRQGM":
-            print "Game Info request"
-            response = "GMINF"
-"""""
-
-
-
 class ClientSendThread(threading.Thread):
     def __init__(self,ip,port,clientSocket,sendQueue):
         threading.Thread.__init__(self)
         self.ip = ip
         self.port = port
         self.clientSocket = clientSocket
+        self.user =  User("",ip,port)
         self.sendQueue = sendQueue
         print ("[+] New Send Thread started for " + ip + ":" + str(port))
 
     def sendtoAll(self,data):
-        for thread in sendThreads.get():
+        for thread in clientThreads.get():
             thread.clientSocket.sendall(data)
             print data
             #thread
@@ -153,23 +144,13 @@ class ClientSendThread(threading.Thread):
                     self.clientSocket.close()
 
 
-""""
-    if (RequestedBingoSessionUsers._qsize() >= 3) and (RequestedBingoSessionUsers.qsize() <= 6):
-        print "hello new game"
-        ActiveBingoSessionUsers.queue.clear()
-        for user in RequestedBingoSessionUsers.get():
-            user.generateCard()
-            ActiveBingoSessionUsers.put(user)
-
 """""
-
-
 def checkStartGame():
-    for activeSendThread in sendThreads:
+    for activeSendThread in clientThreads:
         activeSendThread.user.ticket.generateTicket()
         userTicket = activeSendThread.user.ticket.getTicketValueStream()
         message = "IGMST" + str(activeSendThread.user.ticket.getTicketValueStream())
-        activeSendThread.send(message)
+        activeSendThread.clientSocket.send(message)
         print message
 
     print "checkToStartGame"
@@ -177,59 +158,40 @@ def checkStartGame():
 def checkSendNumber(self):
     print "number Generator"
     generateNumber = True
-    for activeSendThread in sendThreads:
+    for activeSendThread in clientThreads:
         if (not activeSendThread.user.lastNumberApproved):
             generateNumber= False
             break
     if (generateNumber):
         number = random.sample(range(1,90),89)
-        for activeSendThread in sendThreads:
+        for activeSendThread in clientThreads:
             message = "IANNM" + str(number).zfill(2)
-            activeSendThread.send(message)
+            activeSendThread.clientSocket.send(message)
 
     print "generateNumber"
 
 def broadCastCinko(self,userName,cinkoID):
-    for uthread in sendThreads:
-        message = "IBRCN" + userName + cinkoID
-        uthread.csocket.sendAll(message)
+    for uthread in clientThreads:
+        message = "IBRCN" + userName + str(cinkoID).zfill(2)
+        uthread.clientSocket.sendAll(message)
     print "broadcast Cinko"
 
 def broadCastTombala(self,userName):
-    for uthread in sendThreads:
-        message = "IBRTM" + userName
-        uthread.csocket.sendAll(message)
+    for uthread in clientThreads:
+        message = "IBRTM" + string.ljust(userName,10,' ')
+        uthread.clientSocket.sendAll(message)
     print "broadcast Tombala"
 
 def broadCastNumber(self,number):
-    for uthread in sendThreads:
+    for uthread in clientThreads:
         message = "IANNM" + str(number).zfill(2)
-        uthread.csocket.sendAll(message)
+        uthread.clientSocket.sendAll(message)
     print "broadcast Number"
 
-#will be in User object
-#def cardGenerator(self):
-#    print "card Generator"
-
-#will be in User object
-#def setNumberInCards(self):
-#    print "set number in cards"
-
-#will be in User object
-#def checkCinko(self,userName, cinkoID):
-#    print "check Cinko"
-#   cinkoUserCard[][] = getUserCard()
-
-#will be in User object
-#def checkTombala(self,userName):
-#    print "check Tombala"
-
-#ActiveBingoSessionUsers = Queue.Queue()
-#RequestedBingoSessionUsers = Queue.Queue()
 
 AllSignInUsers = []
-getThreads = []
-sendThreads = []
+clientThreads = []
+#sendThreads = []
 activeSessionUsers = []
 requestSessionUsers = []
 
@@ -249,14 +211,14 @@ s.listen(5)
 
 while True:
     (clientSocket,(ip,port)) = s.accept()
-    newGetThread = ClientGetThread(ip,port,clientSocket)
-    getThreads.append(newGetThread)
-    newGetThread.start()
+    newClientThread = ClientThread(ip,port,clientSocket)
+    clientThreads.append(newClientThread)
+    newClientThread.start()
 
-    sendQueue = Queue.Queue()
-    newSendThread = ClientSendThread(ip,port,clientSocket,sendQueue)
-    sendThreads.append(newSendThread)
-    newSendThread.start()
+#    sendQueue = Queue.Queue()
+#    newSendThread = ClientSendThread(ip,port,clientSocket,sendQueue)
+#    sendThreads.append(newSendThread)
+#    newSendThread.start()
 
 
 

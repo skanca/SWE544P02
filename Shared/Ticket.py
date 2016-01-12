@@ -17,6 +17,18 @@ class Ticket:
                 self.TicketValue[index1][index2] = ticket[(index1 - 1) * self.columnNumber + index2]
                 self.TicketState[index1][index2] = ticket[(index1 - 1) * self.columnNumber + index2]
 
+    def setTicket(self,ticketValue):
+        print "setTicket"
+        print ticketValue
+        for index1 in range(self.rowNumber):
+            for index2 in range(self.columnNumber):
+                ind = ((index1 * self.columnNumber) + (index2 * 3))
+                print ind
+                self.TicketValue[index1][index2] = ticketValue[ind:2]
+                self.TicketState[index1][index2] = ticketValue[ind:2]
+                print ticketValue
+                print(self.TicketValue[index1][index2])
+
     def getTicketValueStream(self):
         ticketValueStream = ""
         for index1 in range(self.rowNumber):
