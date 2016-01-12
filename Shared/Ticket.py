@@ -68,6 +68,3 @@ class Ticket:
                     break
         return tombalaMi
 
-#ticketa = Ticket(3,9,1,90)
-#ticketa.generateTicket()
-#ticketastream = ticketa.getTicketStateStream()

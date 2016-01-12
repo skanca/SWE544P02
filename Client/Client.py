@@ -235,7 +235,6 @@ screenQueue = Queue.Queue()
 
 s=socket.socket()
 host = socket.gethostname()
-#print host
 port=12345
 
 user = User("",host,port)
